@@ -1,7 +1,7 @@
 $(function () {
 
   var words = _.shuffle(['DIGITAL', 'COMMUNITY', 'ONLINE', 'COLLABORATION', 'TOOL', 'SOCIAL', 'NETWORK', 'UPDATE', 'TECHNOLOGY', 'CHAT', 'BLOG', 'FORUM', 'WIKI', 'AVATAR', 'SHARING', 'LIKE', 'EMAIL', 'MANAGER', 'MEDIA', 'STRATEGY', 'MODERATOR', 'AUTHOR', 'ADMIN', 'CULTURE', 'CODESIGN', 'CARE', 'ANALYTICS', 'LMS', 'GOVERNANCE', 'DATA', 'IOT']);
-
+  
   var retryCount = 50;
   var gridSize = 8;
   var grid = [];
@@ -21,32 +21,37 @@ $(function () {
   }
   
   var canGo = function (where, x, y, letter) {
-    if (where == 'right') {
-      y += 1;
-    }
-    if (where == 'left') {
-      y -= 1;
-    }
-    if (where == 'bottom') {
-      x += 1;
-    }
-    if (where == 'top') {
-      x -= 1;
-    }
+    if (where == 'right') { y += 1; }
+    if (where == 'left') { y -= 1; }
+    if (where == 'bottom') { x += 1; }
+    if (where == 'top') { x -= 1; }
     
-    if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
-      if (grid[x][y] == '') {
-        return true;
-      }
-      if (letter && grid[x][y] == letter) {
-        return true;
-      }
-      return false;
-    } else {
-      return false;
+    if ((x >= 0 && x < gridSize && y >= 0 && y < gridSize) &&
+        (grid[x][y] == '' || (letter && grid[x][y] == letter))) {
+      return true;
     }
+    return false;
   }
   
+  var getParameters = function (empty, letter) {
+    var sample = _.sample(empty);
+    var sampleX = Math.floor(sample / gridSize);
+    var sampleY = sample % gridSize;
+    
+    var direction = [];
+    if (canGo('top', sampleX, sampleY, letter)) { direction.push('top'); }
+    if (canGo('left', sampleX, sampleY, letter)) { direction.push('left'); }
+    if (canGo('right', sampleX, sampleY, letter)) { direction.push('right'); }
+    if (canGo('bottom', sampleX, sampleY, letter)) { direction.push('bottom'); }
+    
+    console.log('From', sampleX, sampleY, 'i can go', direction);
+    
+    return {
+      directions: direction,
+      x: sampleX,
+      y: sampleY
+    };
+  }
   
   var setupGrid = function () {
     for (var i = 0; i < gridSize; i++) {
@@ -66,14 +71,13 @@ $(function () {
   _.each(words, function (word) {
     
     grid = _.clone(finalGrid, true);
-        
+    
+    var count = 0;
     var flattenGrid = _.flatten(finalGrid);
     var empty = [];    
     _.map(flattenGrid, function (cell, id) { if (cell == '') { empty.push(id); }});
 
     console.log('Trying to insert Word', word);
-    
-    var count = 0;
     
     function inject(word, index, direction, x, y) {
       
@@ -92,24 +96,13 @@ $(function () {
         
         if ((x < 0 || x >= gridSize || y < 0 || y >= gridSize) || (grid[x][y] != '' && grid[x][y] != word[index])) {
           
-          if (count <= retryCount) {
+          if (count < retryCount) {
             count ++;
             console.log('Retry #' + count + ' of ' + retryCount, word);
             grid = _.clone(finalGrid, true);
             
-            var sample = _.sample(empty);
-            var sampleX = Math.floor(sample / gridSize);
-            var sampleY = sample % gridSize;
-
-            var direction = [];
-            if (canGo('top', sampleX, sampleY)) { direction.push('top'); }
-            if (canGo('left', sampleX, sampleY)) { direction.push('left'); }
-            if (canGo('right', sampleX, sampleY)) { direction.push('right'); }
-            if (canGo('bottom', sampleX, sampleY)) { direction.push('bottom'); }
-
-            console.log('I can go', direction, sampleX, sampleY);
-
-            inject(word, 0, _.sample(direction), sampleX, sampleY);
+            var params = getParameters(empty, word[0]);
+            inject(word, 0, _.sample(params.directions), params.x, params.y);
             
           } else {
             console.log('Enough... change word');
@@ -167,21 +160,21 @@ $(function () {
       }
     }
   
-    var sample = _.sample(empty);
-    var sampleX = Math.floor(sample / gridSize);
-    var sampleY = sample % gridSize;
+    var params = getParameters(empty, word[0]);
     
-    var direction = [];
-    if (canGo('top', sampleX, sampleY)) { direction.push('top'); }
-    if (canGo('left', sampleX, sampleY)) { direction.push('left'); }
-    if (canGo('right', sampleX, sampleY)) { direction.push('right'); }
-    if (canGo('bottom', sampleX, sampleY)) { direction.push('bottom'); }
-    
-    console.log('I can go', direction, sampleX, sampleY);
-    
-    inject(word, 0, _.sample(direction), sampleX, sampleY);
+    inject(word, 0, _.sample(params.directions), params.x, params.y);
     
   });
+  
+  
+  var alphabet = inserted.join('');
+  for (var i = 0; i < gridSize; i++) {
+    for (var j = 0; j < gridSize; j++) {
+      if (finalGrid[i][j] == '') {
+        finalGrid[i][j] = _.sample(alphabet);
+      }
+    }
+  }
   
   
   console.log('Inserted words', inserted.length, inserted);
