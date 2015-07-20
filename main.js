@@ -110,52 +110,36 @@ $(function () {
           return;
         }
         
+        
+        //Insert this letter
         grid[x][y] = word[index];
 
-        //console.log('Inserted', word[index]);
+        if (direction == 'right' && y == gridSize - 1 ||
+            direction == 'left' && y == 0 ||
+            direction == 'bottom' && x == gridSize - 1 ||
+            direction == 'top' && x == 0) {
 
-
-        if (direction == 'right' && y != gridSize - 1 ||
-            direction == 'left' && y != 0 ||
-            direction == 'bottom' && x != gridSize - 1 ||
-            direction == 'top' && x != 0) {
-
-          // I can continue on this direction
-
-          if (direction == 'right') {
-            inject(word, index + 1, direction, x, y + 1);
-          }
-          if (direction == 'left') {
-            inject(word, index + 1, direction, x, y - 1);
-          }
-          if (direction == 'bottom') {
-            inject(word, index + 1, direction, x + 1, y);
-          }
-          if (direction == 'top') {
-            inject(word, index + 1, direction, x - 1, y);
-          }
-
-        } else {
+          // I need to change direction
           var where;
           if (direction == 'top' || direction == 'bottom') {
             where = _.shuffle(['left', 'right']);
           } else {
             where = _.shuffle(['top', 'bottom']);
           }
-          var newD = canGo(where[0], x, y, word[index + 1]) ? where[0] : where[1];
+          direction = canGo(where[0], x, y, word[index + 1]) ? where[0] : where[1];
+        }
 
-          if (newD == 'right') {
-            inject(word, index + 1, newD, x, y + 1);
-          }
-          if (newD == 'left') {
-            inject(word, index + 1, newD, x, y - 1);
-          }
-          if (newD == 'bottom') {
-            inject(word, index + 1, newD, x + 1, y);
-          }
-          if (newD == 'top') {
-            inject(word, index + 1, newD, x - 1, y);
-          }
+        if (direction == 'right') {
+          inject(word, index + 1, direction, x, y + 1);
+        }
+        if (direction == 'left') {
+          inject(word, index + 1, direction, x, y - 1);
+        }
+        if (direction == 'bottom') {
+          inject(word, index + 1, direction, x + 1, y);
+        }
+        if (direction == 'top') {
+          inject(word, index + 1, direction, x - 1, y);
         }
       }
     }
